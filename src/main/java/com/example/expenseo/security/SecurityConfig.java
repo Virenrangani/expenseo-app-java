@@ -54,6 +54,7 @@ public class SecurityConfig {
      * Defines the Password Encoder used across the application.
      * BCrypt is the industry standard for hashing passwords.
      */
+    @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
