@@ -1,7 +1,7 @@
 package com.example.expenseo.mapper;
 
 import com.example.expenseo.dto.UserRequest;
-import com.example.expenseo.dto.UserResponse;
+import com.example.expenseo.dto.AuthResponse;
 import com.example.expenseo.models.UserModel;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
@@ -11,5 +11,5 @@ public interface UserMapStructMapper {
 
     UserModel toEntity(UserRequest request);
 
-    UserResponse toResponse(UserModel user);
+    AuthResponse toResponse(UserModel user);
 }
