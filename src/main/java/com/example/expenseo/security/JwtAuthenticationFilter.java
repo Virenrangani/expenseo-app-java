@@ -35,10 +35,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String userEmail;
 
         // 2. Check if header is missing or doesn't start with "Bearer "
-        if (authHeader == null || !authHeader.startsWith("Bearer ")){
-            // Pass the request to the next filter.
-            // If the endpoint is secured, Spring will block it automatically later.
-            filterChain.doFilter(request,response);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
         // 3. Extract the token (Remove "Bearer " which is 7 characters)
