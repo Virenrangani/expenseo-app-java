@@ -1,7 +1,7 @@
 package com.example.expenseo.mapper;
 
+import com.example.expenseo.dto.AuthResponse;
 import com.example.expenseo.dto.UserRequest;
-import com.example.expenseo.dto.UserResponse;
 import com.example.expenseo.models.UserModel;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +16,8 @@ public class UserMapper {
                 .build();
     }
 
-    public static UserResponse toResponse(UserModel response){
-        return UserResponse.builder()
+    public static AuthResponse toResponse(UserModel response){
+        return AuthResponse.builder()
                 .id(response.getId())
                 .email(response.getEmail())
                 .name(response.getName())
