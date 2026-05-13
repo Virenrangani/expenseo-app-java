@@ -5,7 +5,9 @@
     import com.example.expenseo.dto.UserRequest;
     import com.example.expenseo.mapper.UserMapStructMapper;
     import com.example.expenseo.models.UserModel;
+    import com.example.expenseo.models.VerificationToken;
     import com.example.expenseo.repository.UserRepository;
+    import com.example.expenseo.repository.VerificationTokenRepository;
     import com.example.expenseo.security.CustomUserDetails;
     import com.example.expenseo.security.JwtUtils;
     import lombok.RequiredArgsConstructor;
@@ -14,6 +16,9 @@
     import org.springframework.security.core.Authentication;
     import org.springframework.security.crypto.password.PasswordEncoder;
     import org.springframework.stereotype.Service;
+
+    import java.time.LocalDateTime;
+    import java.util.UUID;
 
     @Service
 @RequiredArgsConstructor
@@ -24,6 +29,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+    private final VerificationTokenRepository tokenRepository;
 
 
     public AuthResponse signUp(UserRequest user ) {
@@ -36,11 +42,39 @@ public class UserService {
         String hasPassword = passwordEncoder.encode(user.getPassword());
         newUser.setPassword(hasPassword);
 
+        newUser.setVerified(false);
         UserModel savedUser = userRepository.save(newUser);
+
+        //Generate token
+        String token = UUID.randomUUID().toString();
+
+        VerificationToken verificationToken = VerificationToken.builder()
+                .token(token)
+                .expiresAt(LocalDateTime.now().plusMinutes(15))
+                .user(savedUser)
+                .build();
 
         return userMapper.toResponse(savedUser);
 
     }
+
+    // New method to handle the verification click
+    public void verifyEmail(String token) {
+        VerificationToken verificationToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+
+        if (verificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token has expired");
+        }
+
+        UserModel user = verificationToken.getUser();
+        user.setVerified(true);
+        userRepository.save(user);
+
+        // Clean up the used token
+        tokenRepository.delete(verificationToken);
+    }
+
 
         public AuthResponse login(LoginRequest request) {
             // 1. Authenticate the user AND capture the result
