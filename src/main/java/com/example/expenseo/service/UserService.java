@@ -10,6 +10,7 @@
     import com.example.expenseo.repository.VerificationTokenRepository;
     import com.example.expenseo.security.CustomUserDetails;
     import com.example.expenseo.security.JwtUtils;
+    import jakarta.transaction.Transactional;
     import lombok.RequiredArgsConstructor;
     import org.springframework.security.authentication.AuthenticationManager;
     import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,8 +31,10 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final VerificationTokenRepository tokenRepository;
+    private final EmailService emailService;
 
 
+    @Transactional
     public AuthResponse signUp(UserRequest user ) {
         if (userRepository.existsByEmail(user.getEmail())){
             throw  new RuntimeException("Email is already in use!");
@@ -53,6 +56,9 @@ public class UserService {
                 .expiresAt(LocalDateTime.now().plusMinutes(15))
                 .user(savedUser)
                 .build();
+        tokenRepository.save(verificationToken);
+
+        emailService.sendVerificationEmail(savedUser.getEmail(), token);
 
         return userMapper.toResponse(savedUser);
 
