@@ -1,0 +1,57 @@
+package com.example.expenseo.models;
+
+import com.example.expenseo.enums.ExpenseCategory;
+import com.example.expenseo.enums.ExpenseType;
+import com.example.expenseo.enums.TransactionType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "expenses" ,indexes = {
+        @Index(name = "idx_expense_user", columnList = "user_id")
+})
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ExpenseModel {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false ,updatable = false)
+    private String id;
+
+    @NotNull(message = "Amount is Required")
+    @Column(nullable = false , precision = 12, scale = 2)
+    private BigDecimal amount;
+
+    @NotBlank(message = "Title is Required")
+    @Column(nullable = false,length = 100)
+    private String title;
+
+    @Enumerated(value = EnumType.STRING)
+    private TransactionType transactionType;
+
+    @Enumerated(value = EnumType.STRING)
+    private ExpenseType expenseType;
+
+    @Enumerated(value = EnumType.STRING)
+    private ExpenseCategory expenseCategory;
+
+    @CreationTimestamp
+    private LocalDateTime expenseDate;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JsonIgnore
+    @JoinColumn(name = "user_id", nullable = false , foreignKey = @ForeignKey(name = "fk_expense_user"))
+    private UserModel user;
+}
