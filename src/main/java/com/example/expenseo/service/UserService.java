@@ -6,15 +6,14 @@
     import com.example.expenseo.mapper.UserMapStructMapper;
     import com.example.expenseo.models.UserModel;
     import com.example.expenseo.repository.UserRepository;
+    import com.example.expenseo.security.CustomUserDetails;
     import com.example.expenseo.security.JwtUtils;
-    import jakarta.validation.Valid;
     import lombok.RequiredArgsConstructor;
     import org.springframework.security.authentication.AuthenticationManager;
     import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.Authentication;
     import org.springframework.security.crypto.password.PasswordEncoder;
     import org.springframework.stereotype.Service;
-    import org.springframework.web.bind.annotation.RequestBody;
 
     @Service
 @RequiredArgsConstructor
@@ -43,29 +42,31 @@ public class UserService {
 
     }
 
-    public AuthResponse login( LoginRequest request){
-        // 1. Authenticate the user
-        // This single line does the heavy lifting: It checks if the user exists and if the password matches the hash.
-        // If it fails, it throws a BadCredentialsException immediately.
+        public AuthResponse login(LoginRequest request) {
+            // 1. Authenticate the user AND capture the result
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+            // 2. Extract the CustomUserDetails from the authentication object
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        // 2. Fetch the user from the database (we know they exist because step 1 passed)
-        UserModel user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(()-> new RuntimeException("User not found"));
+            // 3. Extract the raw UserModel from your wrapper (assuming you added the getUser() method we discussed earlier)
+            assert userDetails != null;
+            UserModel user = userDetails.getUser();
 
-        String jwt = jwtUtils.generateToken((UserDetails) user);
+            // 4. Generate the token
+            String jwt = jwtUtils.generateToken(userDetails);
 
-        return AuthResponse.builder()
-                .token(jwt)
-                .id(user.getId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .build();
+            // 5. Return the response
+            return AuthResponse.builder()
+                    .token(jwt)
+                    .id(user.getId())
+                    .email(user.getEmail())
+                    .name(user.getName())
+                    .build();
+        }
     }
-}
