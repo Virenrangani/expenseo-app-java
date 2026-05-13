@@ -45,7 +45,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return userModel.isVerified();
     }
 
     // Optional: Expose the userModel if you need to extract the ID later in the filter chain
