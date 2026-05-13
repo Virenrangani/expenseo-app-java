@@ -1,5 +1,6 @@
-package com.example.expenseo.config;
+package com.example.expenseo.security;
 
+import com.example.expenseo.models.UserModel;
 import com.example.expenseo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -15,8 +16,13 @@ public class ApplicationConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        // Lambda implementation of the interface
-        return username -> (org.springframework.security.core.userdetails.UserDetails) userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+
+        return username -> { UserModel user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new UsernameNotFoundException(
+                                    "User not found with email: " + username
+                            ));
+
+            return new CustomUserDetails(user);
+        };
     }
 }
