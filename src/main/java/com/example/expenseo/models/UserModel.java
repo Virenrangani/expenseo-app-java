@@ -37,4 +37,7 @@ public class UserModel  {
     @UpdateTimestamp
     private  LocalDateTime updatedAt;
 
+    @Column(nullable = false)
+    private boolean isVerified = false;
+
 }
