@@ -30,11 +30,9 @@ public class ExpenseModel {
     @Column(nullable = false ,updatable = false)
     private String id;
 
-    @NotNull(message = "Amount is Required")
     @Column(nullable = false , precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @NotBlank(message = "Title is Required")
     @Column(nullable = false,length = 100)
     private String title;
 
