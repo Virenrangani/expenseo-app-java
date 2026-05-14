@@ -31,4 +31,11 @@ public class ExpenseController {
         List<ExpenseResponse> responses = expenseService.getAllExpenses();
         return ResponseEntity.ok(responses);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> removeExpense(@PathVariable("id") String id){
+        expenseService.removeExpense(id);
+
+        return ResponseEntity.noContent().build();
+    }
 }
