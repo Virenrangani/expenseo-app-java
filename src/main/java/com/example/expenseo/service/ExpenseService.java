@@ -59,4 +59,20 @@ public class ExpenseService {
                 .map(expenseMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+
+    public void removeExpense(String expenseId){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()){
+            throw new RuntimeException("Authentication context is missing or invalid.");
+        }
+
+        CustomUserDetails currentUser = (CustomUserDetails) authentication.getPrincipal();
+        String userId = currentUser.getUser().getId();
+
+        ExpenseModel expense = expenseRepository.findByIdAndUserId(expenseId , userId)
+                .orElseThrow(()->new RuntimeException("Expense not found or you do not have permission to delete it."));
+
+        expenseRepository.delete(expense);
+    }
 }
