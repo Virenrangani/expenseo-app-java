@@ -1,6 +1,5 @@
 package com.example.expenseo.mapper;
 
-import com.example.expenseo.dto.GroupRequest;
 import com.example.expenseo.dto.GroupResponse;
 import com.example.expenseo.models.GroupModel;
 import org.mapstruct.Mapper;
@@ -11,7 +10,7 @@ import java.util.List;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING , uses = UserMapStructMapper.class)
 public interface GroupMapper {
 
-     GroupResponse toEntity(GroupRequest request);
+     GroupResponse toResponse(GroupModel group);
 
-     List<GroupModel> toResponse(GroupResponse response);
+     List<GroupResponse> toResponseList(List<GroupModel> groups);
 }
