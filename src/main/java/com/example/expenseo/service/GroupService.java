@@ -3,6 +3,7 @@ package com.example.expenseo.service;
 import com.example.expenseo.dto.AuthResponse;
 import com.example.expenseo.dto.GroupRequest;
 import com.example.expenseo.dto.GroupResponse;
+import com.example.expenseo.mapper.GroupMapper;
 import com.example.expenseo.models.GroupModel;
 import com.example.expenseo.models.UserModel;
 import com.example.expenseo.repository.GroupRepository;
@@ -23,6 +24,7 @@ public class GroupService {
 
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
+    private final GroupMapper groupMapper;
 
     @Transactional
     public GroupResponse createGroup(GroupRequest request){
@@ -50,18 +52,7 @@ public class GroupService {
         }
         GroupModel savedGroup = groupRepository.save(group);
 
-        return GroupResponse.builder()
-                .id(savedGroup.getId())
-                .name(savedGroup.getName())
-                .createdAt(savedGroup.getCreatedAt())
-                .members(savedGroup.getMembers().stream()
-                        .map(member -> AuthResponse.builder()
-                                .id(member.getId())
-                                .name(member.getName())
-                                .email(member.getEmail())
-                                .build())
-                        .collect(Collectors.toList()))
-                .build();
+        return groupMapper.toResponse(savedGroup);
     }
 
     public List<GroupResponse> getAllGroups(){
@@ -75,20 +66,6 @@ public class GroupService {
         List<GroupModel> groups = groupRepository.findByMembersIdOrderByCreatedAtDesc(currentUserId);
 
         // 3. Map the Entities to Response DTOs
-        return  groups.stream()
-                .map(group -> GroupResponse.builder()
-                        .id(group.getId())
-                        .name(group.getName())
-                        .createdAt(group.getCreatedAt())
-                        /// We also map the members list inside each group!
-                        .members(group.getMembers().stream()
-                                .map(member -> AuthResponse.builder()
-                                        .id(member.getId())
-                                        .name(member.getName())
-                                        .email(member.getEmail())
-                                        .build())
-                                .collect(Collectors.toList()))
-                        .build())
-                .collect(Collectors.toList());
+        return  groupMapper.toResponseList(groups);
     }
 }
