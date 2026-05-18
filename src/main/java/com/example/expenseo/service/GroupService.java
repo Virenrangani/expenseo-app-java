@@ -10,9 +10,11 @@ import com.example.expenseo.repository.UserRepository;
 import com.example.expenseo.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,5 +62,33 @@ public class GroupService {
                                 .build())
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    public List<GroupResponse> getAllGroups(){
+        /// 1. Extract the secure user ID from the JWT token
+        CustomUserDetails userDetails = (CustomUserDetails)
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String currentUserId = userDetails.getUser().getId();
+
+        // 2. Fetch all groups belonging to this user
+        List<GroupModel> groups = groupRepository.findByMembersIdOrderByCreatedAtDesc(currentUserId);
+
+        // 3. Map the Entities to Response DTOs
+        return  groups.stream()
+                .map(group -> GroupResponse.builder()
+                        .id(group.getId())
+                        .name(group.getName())
+                        .createdAt(group.getCreatedAt())
+                        /// We also map the members list inside each group!
+                        .members(group.getMembers().stream()
+                                .map(member -> AuthResponse.builder()
+                                        .id(member.getId())
+                                        .name(member.getName())
+                                        .email(member.getEmail())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .build())
+                .collect(Collectors.toList());
     }
 }
