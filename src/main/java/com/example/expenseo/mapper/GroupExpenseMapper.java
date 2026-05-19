@@ -6,6 +6,8 @@ import com.example.expenseo.models.GroupExpenseModel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 // componentModel = "spring" tells MapStruct to make this a Spring Bean (@Component)
 // so we can @Inject it into our services.
 @Mapper(componentModel = "spring")
@@ -18,12 +20,9 @@ public interface GroupExpenseMapper {
      */
     @Mapping(source = "group.id", target = "groupId")
     @Mapping(source = "paidBy.id", target = "paidByUserId")
-    // If your response has 'totalAmount' but your model has 'amount', you map it explicitly:
-    @Mapping(source = "amount", target = "totalAmount")
     GroupExpenseResponse toResponse(GroupExpenseModel expenseModel);
 
     /// Maps the Child Split Entity to the nested SplitDetailResponse DTO.
-
     @Mapping(source = "user.id", target = "userId")
     GroupExpenseResponse.SplitDetailResponse toSplitResponse(ExpenseSplitModel splitModel);
 }
