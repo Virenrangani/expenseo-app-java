@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +41,10 @@ public class GroupExpenseService {
         GroupModel group = groupRepository.findById(request.getGroupId())
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
-        if (!group.getMembers().contains(currentUser)) {
+        boolean isCurrentUserMember = group.getMembers().stream()
+                .anyMatch(member -> member.getId().equals(currentUser.getId()));
+
+        if (!isCurrentUserMember) {
             throw new RuntimeException("Unauthorized: You are not a member of this group.");
         }
 
@@ -93,10 +98,24 @@ public class GroupExpenseService {
         }
 
         // 7. Save to Database (Because we used CascadeType.ALL on the Parent, this saves the children automatically!)
-        GroupExpenseModel savedExpense = groupExpenseRepository.save(groupExpense);
+        GroupExpenseModel savedExpense = groupExpenseRepository.saveAndFlush(groupExpense);
 
         // 8. Map to Response DTO
-        return groupExpenseMapper.toResponse(savedExpense);
+        GroupExpenseResponse response = groupExpenseMapper.toResponse(savedExpense);
+
+        // 9. THE BULLETPROOF FIX: Map the nested splits manually
+        List<GroupExpenseResponse.SplitDetailResponse> splitResponses = savedExpense.getSplitModels().stream()
+                .map(split -> GroupExpenseResponse.SplitDetailResponse.builder()
+                        .id(split.getId())
+                        .userId(split.getUser().getId())
+                        .amountOwed(split.getAmountOwed())
+                        .build())
+                .collect(Collectors.toList());
+
+        // 10. Attach the splits to the response and return!
+        response.setSplits(splitResponses);
+
+        return response;
     }
 
 }
