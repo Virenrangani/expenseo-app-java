@@ -51,6 +51,6 @@ public class GroupExpenseModel {
 
     /// RELATIONSHIP 3: The Ledger. Who owes what for this specific bill?
     /// CascadeType.ALL means when we save the parent expense, it automatically saves all the splits!
-    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY ,orphanRemoval = true , mappedBy = "expenses")
+    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY ,orphanRemoval = true , mappedBy = "expense")
     private List<ExpenseSplitModel> splitModels = new ArrayList<>();
 }
