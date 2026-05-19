@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -118,4 +119,38 @@ public class GroupExpenseService {
         return response;
     }
 
+    public List<GroupExpenseResponse> getGroupExpense(String groupId){
+        /// 1. Extract Current User
+        CustomUserDetails userDetails = (CustomUserDetails)
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserModel currentUser = userDetails.getUser();
+
+        /// 2. Fetch the Group and perform the Security Check
+        GroupModel group = groupRepository.findById(groupId)
+                .orElseThrow(()->new RuntimeException("Group not found"));
+
+        boolean isMember = group.getMembers().stream()
+                .anyMatch(member->member.getId().equals(currentUser.getId()));
+
+        if (!isMember){
+            throw new RuntimeException("Unauthorized: You cannot view expenses for a group you are not in.");
+        }
+
+        List<GroupExpenseModel> expenses = groupExpenseRepository.findByGroupIdOrderByCreatedAtDesc(groupId);
+
+        return expenses.stream().map(expense-> {
+
+            GroupExpenseResponse response = groupExpenseMapper.toResponse(expense);
+
+            List<GroupExpenseResponse.SplitDetailResponse> splitExpense = expense.getSplitModels().stream().map(
+                    split-> GroupExpenseResponse.SplitDetailResponse.builder()
+                            .id(split.getId())
+                            .amountOwed(split.getAmountOwed())
+                            .userId(split.getUser().getId())
+                            .build()
+            ).toList();
+            response.setSplits(splitExpense);
+            return response;
+                }).collect(Collectors.toList());
+    }
 }
