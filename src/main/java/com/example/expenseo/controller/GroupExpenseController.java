@@ -26,8 +26,8 @@ public class GroupExpenseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("{groupId}")
-    public ResponseEntity<List<GroupExpenseResponse>> getGroupExpense(@PathVariable String groupId){
+    @GetMapping("/group/{groupId}")
+    public ResponseEntity<List<GroupExpenseResponse>> getGroupExpense(@PathVariable("groupId") String groupId){
         List<GroupExpenseResponse> expense = groupExpenseService.getGroupExpense(groupId);
 
         return ResponseEntity.ok(expense);
