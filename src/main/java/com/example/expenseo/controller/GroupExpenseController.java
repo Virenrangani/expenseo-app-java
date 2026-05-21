@@ -2,6 +2,7 @@ package com.example.expenseo.controller;
 
 import com.example.expenseo.dto.GroupExpenseRequest;
 import com.example.expenseo.dto.GroupExpenseResponse;
+import com.example.expenseo.dto.SettlementRequest;
 import com.example.expenseo.service.GroupExpenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,11 @@ public class GroupExpenseController {
         List<GroupExpenseResponse> expense = groupExpenseService.getGroupExpense(groupId);
 
         return ResponseEntity.ok(expense);
+    }
+
+    @PostMapping("/settle")
+    public ResponseEntity<GroupExpenseResponse> settleUp(@Valid @RequestBody SettlementRequest request) {
+        GroupExpenseResponse response = groupExpenseService.settleUp(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
