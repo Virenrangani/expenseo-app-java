@@ -2,6 +2,8 @@ package com.example.expenseo.service;
 
 import com.example.expenseo.dto.GroupExpenseRequest;
 import com.example.expenseo.dto.GroupExpenseResponse;
+import com.example.expenseo.dto.SettlementRequest;
+import com.example.expenseo.enums.SplitExpenseType;
 import com.example.expenseo.mapper.GroupExpenseMapper;
 import com.example.expenseo.models.ExpenseSplitModel;
 import com.example.expenseo.models.GroupExpenseModel;
@@ -16,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -152,5 +153,60 @@ public class GroupExpenseService {
             response.setSplits(splitExpense);
             return response;
                 }).collect(Collectors.toList());
+    }
+
+    public GroupExpenseResponse settleUp(SettlementRequest request){
+        // 1. Fetch the Group
+        GroupModel group = groupRepository.findById(request.getGroupId())
+                .orElseThrow(()-> new RuntimeException("Group is not found"));
+
+        // 2. Fetch Both Users
+        UserModel payer = userRepository.findById(request.getPayerId())
+                .orElseThrow(()->new RuntimeException("Payer is not found"));
+
+        UserModel receiver = userRepository.findById(request.getReceiverId())
+                .orElseThrow(()->new RuntimeException("Receiver is not found"));
+
+        // 3. Security: Ensure both users are actually in this group!
+        if (!group.getMembers().contains(payer) || !group.getMembers().contains(receiver)){
+            throw  new RuntimeException("Both users must be members of the group to settle up.");
+        }
+
+        // 4. THE MAGIC MATH: Create the Settlement Transaction
+        GroupExpenseModel settlementExpense = GroupExpenseModel.builder()
+                .title(payer.getId() + " Paid " + receiver.getName())
+                .splitExpenseType(SplitExpenseType.SETTLEMENT)
+                .amount(request.getAmount())
+                .group(group)
+                .paidBy(payer)
+                .splitModels(new ArrayList<>())
+                .build();
+
+        // 5. Create the exact ledger split for Viren
+
+        ExpenseSplitModel settlementSplit = ExpenseSplitModel.builder()
+                .user(receiver)
+                .amountOwed(request.getAmount())
+                .expense(settlementExpense)
+                .build();
+        settlementExpense.getSplitModels().add(settlementSplit);
+
+        // 6. Save and Flush to DB
+        GroupExpenseModel savedSettlementExpense = groupExpenseRepository.saveAndFlush(settlementExpense);
+
+        // 7. Use the same Bulletproof mapping we used before to return the response
+        GroupExpenseResponse response = groupExpenseMapper.toResponse(savedSettlementExpense);
+
+        List<GroupExpenseResponse.SplitDetailResponse> splitExpense = savedSettlementExpense.getSplitModels()
+                .stream().map(
+                        expense -> GroupExpenseResponse.SplitDetailResponse.builder()
+                                .id(expense.getId())
+                                .userId(expense.getUser().getId())
+                                .amountOwed(expense.getAmountOwed())
+                                .build()
+                ).toList();
+        response.setSplits(splitExpense);
+
+        return response;
     }
 }
