@@ -44,7 +44,11 @@ public class DepositService {
             throw new RuntimeException("This goal is already completed!");
         }
 
-        DepositModel deposit = depositMapper.toEntity(request);
+        DepositModel deposit = DepositModel.builder()
+                .savedAmount(request.getSavedAmount())
+                .user(currentUser)
+                .savingGoal(goal)
+                .build();
 
         DepositModel savedDeposit = depositRepository.save(deposit);
 
