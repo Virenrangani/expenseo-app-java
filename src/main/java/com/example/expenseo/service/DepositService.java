@@ -1,6 +1,7 @@
 package com.example.expenseo.service;
 
 import com.example.expenseo.dto.DepositRequest;
+import com.example.expenseo.dto.DepositResponse;
 import com.example.expenseo.dto.SavingResponse;
 import com.example.expenseo.mapper.DepositMapper;
 import com.example.expenseo.mapper.SavingMapper;
@@ -16,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -63,4 +65,24 @@ public class DepositService {
 
         return savingMapper.toResponse(updatedGoal);
     }
+
+    public List<DepositResponse> getAllDeposit(String goalId){
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+        UserModel currentUser = userDetails.getUser();
+
+        // 2. Fetch the goal first to make sure it exists and belongs to this user
+        SavingModel goal = savingRepository.findById(goalId)
+                .orElseThrow(() -> new RuntimeException("Saving goal not found"));
+
+        if (!goal.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized: You do not own this saving goal.");
+        }
+
+        List<DepositModel> deposits = depositRepository.findBySavingGoalIdOrderByCreatedAtDesc(goalId);
+
+        return deposits.stream().map(
+                depositMapper::toResponse
+        ).toList();
+     }
 }
