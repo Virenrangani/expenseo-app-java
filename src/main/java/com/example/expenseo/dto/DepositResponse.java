@@ -19,8 +19,4 @@ public class DepositResponse {
     private BigDecimal savedAmount;
 
     private LocalDateTime createdAt;
-
-    private String userId;
-
-    private String savingGoalId;
 }
