@@ -6,6 +6,7 @@ import com.example.expenseo.mapper.SavingMapper;
 import com.example.expenseo.models.SavingModel;
 import com.example.expenseo.models.UserModel;
 import com.example.expenseo.repository.SavingRepository;
+import com.example.expenseo.repository.UserRepository;
 import com.example.expenseo.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,15 +21,23 @@ public class SavingService {
 
     private final SavingRepository savingRepository;
     private final SavingMapper savingMapper;
+    private final UserRepository userRepository;
 
     public SavingResponse createSavingGoal(SavingRequest request){
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
                 .getContext().getAuthentication().getPrincipal();
-        UserModel user = userDetails.getUser();
+        String userId = userDetails.getUser().getId();
 
-        SavingModel savingGaol = savingMapper.toRequest(request);
+        UserModel managedUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        SavingModel savedGoal = savingRepository.save(savingGaol);
+        SavingModel savingGoal = SavingModel.builder()
+                .goal(request.getGoal())
+                .targetAmount(request.getTargetAmount())
+                .user(managedUser)
+                .build();
+
+        SavingModel savedGoal = savingRepository.save(savingGoal);
 
         return savingMapper.toResponse(savedGoal);
     }
