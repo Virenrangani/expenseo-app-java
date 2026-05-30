@@ -7,7 +7,7 @@ import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "string" ,builder = @Builder(disableBuilder = true))
+@Mapper(componentModel = "spring" ,builder = @Builder(disableBuilder = true))
 public interface SavingMapper {
 
     SavingModel toRequest(SavingRequest request);
