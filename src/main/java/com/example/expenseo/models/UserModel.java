@@ -37,6 +37,10 @@ public class UserModel  {
     @UpdateTimestamp
     private  LocalDateTime updatedAt;
 
+    private String otp;
+
+    private LocalDateTime otpExpiry;
+
     @Column(nullable = false)
     private boolean isVerified = false;
 
