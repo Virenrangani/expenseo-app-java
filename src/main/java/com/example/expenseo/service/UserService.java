@@ -11,6 +11,7 @@
     import org.springframework.security.authentication.AuthenticationManager;
     import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
     import org.springframework.security.core.Authentication;
+    import org.springframework.security.core.context.SecurityContextHolder;
     import org.springframework.security.crypto.password.PasswordEncoder;
     import org.springframework.stereotype.Service;
 
@@ -137,5 +138,26 @@ public class UserService {
             userRepository.save(user);
 
             emailService.sendOtpEmail(user.getEmail(), newOtp);
+        }
+
+        public void updatePassword(UpdatePasswordRequest request){
+            CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
+                    .getContext().getAuthentication().getPrincipal();
+
+            UserModel user = userDetails.getUser();
+
+            if (!user.isVerified()){
+                throw new RuntimeException("User is not verified..!");
+            }
+
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new RuntimeException("Old password is incorrect!");
+            }
+
+            String hashedPassword = passwordEncoder.encode(request.getPassword());
+            user.setPassword(hashedPassword);
+
+            userRepository.save(user);
+
         }
     }
