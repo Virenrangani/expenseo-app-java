@@ -1,13 +1,9 @@
     package com.example.expenseo.service;
 
-    import com.example.expenseo.dto.AuthResponse;
-    import com.example.expenseo.dto.LoginRequest;
-    import com.example.expenseo.dto.UserRequest;
+    import com.example.expenseo.dto.*;
     import com.example.expenseo.mapper.UserMapStructMapper;
     import com.example.expenseo.models.UserModel;
-    import com.example.expenseo.models.VerificationToken;
     import com.example.expenseo.repository.UserRepository;
-    import com.example.expenseo.repository.VerificationTokenRepository;
     import com.example.expenseo.security.CustomUserDetails;
     import com.example.expenseo.security.JwtUtils;
     import jakarta.transaction.Transactional;
@@ -18,8 +14,8 @@
     import org.springframework.security.crypto.password.PasswordEncoder;
     import org.springframework.stereotype.Service;
 
+    import java.security.SecureRandom;
     import java.time.LocalDateTime;
-    import java.util.UUID;
 
     @Service
 @RequiredArgsConstructor
@@ -30,57 +26,70 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
-    private final VerificationTokenRepository tokenRepository;
     private final EmailService emailService;
 
 
-    @Transactional
-    public AuthResponse signUp(UserRequest user ) {
-        if (userRepository.existsByEmail(user.getEmail())){
-            throw  new RuntimeException("Email is already in use!");
-        }
 
-        UserModel newUser =  userMapper.toEntity(user);
+        @Transactional
+        public AuthResponse signUp(UserRequest user) {
 
-        String hasPassword = passwordEncoder.encode(user.getPassword());
-        newUser.setPassword(hasPassword);
+            // 1. Check if email is already taken
+            if (userRepository.existsByEmail(user.getEmail())) {
+                throw new RuntimeException("Email is already in use!");
+            }
 
-        newUser.setVerified(false);
-        UserModel savedUser = userRepository.save(newUser);
+            // 2. Generate a secure 6-digit OTP
+            SecureRandom random = new SecureRandom();
+            int otpNumber = 100000 + random.nextInt(900000); // Guarantees a 6-digit number
+            String generatedOtp = String.valueOf(otpNumber);
 
-        //Generate token
-        String token = UUID.randomUUID().toString();
+            // 3. Map the DTO to the Entity
+            UserModel newUser = userMapper.toEntity(user);
 
-        VerificationToken verificationToken = VerificationToken.builder()
-                .token(token)
-                .expiresAt(LocalDateTime.now().plusMinutes(15))
-                .user(savedUser)
-                .build();
-        tokenRepository.save(verificationToken);
+            // 4. Hash the password securely
+            String hashedPassword = passwordEncoder.encode(user.getPassword());
+            newUser.setPassword(hashedPassword);
 
-        emailService.sendVerificationEmail(savedUser.getEmail(), token);
+            // 5. Set up the Verification and OTP states
+            newUser.setOtp(generatedOtp);
+            newUser.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+            newUser.setVerified(false);
 
-        return userMapper.toResponse(savedUser);
+            // 6. Save the user to the database
+            UserModel savedUser = userRepository.save(newUser);
+
+            // 7. Send the email containing the 6-digit OTP (not a link token!)
+            emailService.sendOtpEmail(savedUser.getEmail(), generatedOtp);
+
+            // 8. Return the mapped response
+            return userMapper.toResponse(savedUser);
 
     }
 
-    // New method to handle the verification click
-    public void verifyEmail(String token) {
-        VerificationToken verificationToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+        public void verifyOtp(OtpVerificationRequest request){
+            UserModel user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(()-> new RuntimeException("User is not found"));
 
-        if (verificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token has expired");
+            if (user.isVerified()){
+                throw new RuntimeException("User is already verified..!");
+            }
+
+            if (user.getOtp() == null || !user.getOtp().equals(request.getOtp())){
+                throw new RuntimeException("Invalid OTP. Please try again.");
+            }
+
+            if (user.getOtpExpiry().isBefore(LocalDateTime.now())){
+                throw new RuntimeException("OTP has expired. Please request a new one.");
+            }
+
+            user.setVerified(true);
+
+            user.setOtp(null);
+            user.setOtpExpiry(null);
+
+            userRepository.save(user);
+
         }
-
-        UserModel user = verificationToken.getUser();
-        user.setVerified(true);
-        userRepository.save(user);
-
-        // Clean up the used token
-        tokenRepository.delete(verificationToken);
-    }
-
 
         public AuthResponse login(LoginRequest request) {
             // 1. Authenticate the user AND capture the result
@@ -108,5 +117,25 @@ public class UserService {
                     .email(user.getEmail())
                     .name(user.getName())
                     .build();
+        }
+
+        public void resendOtp(ResendOtpRequest request){
+            UserModel user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(()-> new RuntimeException("User not found with this email."));
+
+            if (user.isVerified()){
+                throw new RuntimeException("This account is already verified. Please log in.");
+            }
+
+            SecureRandom random = new SecureRandom();
+            int otpNumber = 100000 + random.nextInt(900000);
+            String newOtp = String.valueOf(otpNumber);
+
+            user.setOtp(newOtp);
+            user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+
+            userRepository.save(user);
+
+            emailService.sendOtpEmail(user.getEmail(), newOtp);
         }
     }
