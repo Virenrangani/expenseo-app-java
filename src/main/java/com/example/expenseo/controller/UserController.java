@@ -1,8 +1,6 @@
 package com.example.expenseo.controller;
 
-import com.example.expenseo.dto.AuthResponse;
-import com.example.expenseo.dto.LoginRequest;
-import com.example.expenseo.dto.UserRequest;
+import com.example.expenseo.dto.*;
 import com.example.expenseo.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +29,17 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/verify")
-    public ResponseEntity<String> verifyEmail(@RequestParam String token){
-        userService.verifyEmail(token);
+    @PostMapping("/verify")
+    public ResponseEntity<String> verifyOtp(@RequestBody @Valid OtpVerificationRequest request){
+        userService.verifyOtp(request);
         return ResponseEntity.ok("Email successfully verified! You can now log in.");
+    }
+
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<String> resendOtp(@RequestBody @Valid ResendOtpRequest request){
+        userService.resendOtp(request);
+
+        return ResponseEntity.ok("A fresh OTP has been sent to your email!");
     }
 }
