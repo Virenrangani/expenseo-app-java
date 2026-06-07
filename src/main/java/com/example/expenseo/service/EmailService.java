@@ -11,13 +11,14 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    public void sendVerificationEmail(String toEmail, String token) {
-        String verificationLink = "http://localhost:8080/api/auth/verify?token=" + token;
-
+    public void sendOtpEmail(String toEmail, String otp) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
-        message.setSubject("Expenseo - Verify your email address");
-        message.setText("Welcome! Please click the link below to verify your account:\n" + verificationLink);
+        message.setSubject("Expenseo - Your Verification Code");
+
+        message.setText("Welcome to Expenseo!\n\n" +
+                "Your email verification code is: " + otp + "\n\n" +
+                "This code will expire in 10 minutes. Do not share this code with anyone.");
 
         mailSender.send(message);
     }
