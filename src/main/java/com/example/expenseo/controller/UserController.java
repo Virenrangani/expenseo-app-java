@@ -42,4 +42,11 @@ public class UserController {
 
         return ResponseEntity.ok("A fresh OTP has been sent to your email!");
     }
+
+    @PostMapping("/update-password")
+    public ResponseEntity<String> updatePassword(@RequestBody @Valid UpdatePasswordRequest request){
+        userService.updatePassword(request);
+
+        return ResponseEntity.ok("Password is change successfully");
+    }
 }
