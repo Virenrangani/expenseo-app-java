@@ -49,4 +49,18 @@ public class UserController {
 
         return ResponseEntity.ok("Password is change successfully");
     }
+
+    @PostMapping("/forgot-password")
+    public  ResponseEntity<String> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request){
+        userService.forgetPassword(request);
+
+        return  ResponseEntity.ok("Password reset code sent to your email!");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody @Valid ResetPasswordRequest request){
+        userService.resetPassword(request);
+
+        return ResponseEntity.ok("Password successfully reset! You can now log in.");
+    }
 }
