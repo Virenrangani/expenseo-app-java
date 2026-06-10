@@ -161,6 +161,7 @@ public class UserService {
 
         }
 
+        @Transactional
         public void forgetPassword(ForgotPasswordRequest request){
             UserModel user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(()->new RuntimeException("User not found with this email."));
@@ -175,5 +176,29 @@ public class UserService {
 
             emailService.sendPasswordResetEmail(request.getEmail(),resetOtp);
 
+        }
+
+        public void resetPassword(ResetPasswordRequest request){
+            UserModel user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found."));
+
+            // 2. Validate OTP
+            if (user.getOtp() == null || !user.getOtp().equals(request.getOtp())) {
+                throw new RuntimeException("Invalid OTP. Please try again.");
+            }
+
+            if (user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+                throw new RuntimeException("OTP has expired. Please request a new one.");
+            }
+
+            // 3. Hash the NEW password and save it
+            String hashedNewPassword = passwordEncoder.encode(request.getNewPassword());
+            user.setPassword(hashedNewPassword);
+
+            // 4. Security Cleanup: Erase the OTP so it can't be reused
+            user.setOtp(null);
+            user.setOtpExpiry(null);
+
+            userRepository.save(user);
         }
     }
