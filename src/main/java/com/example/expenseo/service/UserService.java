@@ -160,4 +160,20 @@ public class UserService {
             userRepository.save(user);
 
         }
+
+        public void forgetPassword(ForgotPasswordRequest request){
+            UserModel user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(()->new RuntimeException("User not found with this email."));
+
+            SecureRandom random = new SecureRandom();
+            int otpNumber = 1000 + random.nextInt(9000);
+            String resetOtp = String.valueOf(otpNumber);
+
+            user.setOtp(resetOtp);
+            user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+            userRepository.save(user);
+
+            emailService.sendPasswordResetEmail(request.getEmail(),resetOtp);
+
+        }
     }
