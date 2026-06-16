@@ -1,11 +1,16 @@
 package com.example.expenseo.controller;
 
 import com.example.expenseo.dto.*;
+import com.example.expenseo.models.RefreshTokenModel;
+import com.example.expenseo.repository.RefreshTokenRepository;
+import com.example.expenseo.security.JwtUtils;
+import com.example.expenseo.service.RefreshTokenService;
 import com.example.expenseo.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +19,9 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
+    private final JwtUtils jwtUtils;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signUp(@RequestBody @Valid UserRequest user){
@@ -62,5 +70,22 @@ public class UserController {
         userService.resetPassword(request);
 
         return ResponseEntity.ok("Password successfully reset! You can now log in.");
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<RefreshTokenResponse> refreshToken(RefreshTokenRequest request){
+        String requestRefreshToken = request.getRefreshToken();
+
+        return refreshTokenRepository.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshTokenModel::getUser)
+                .map(user -> {
+                    String newAccessToken = jwtUtils.generateToken((UserDetails) user);
+
+                    return ResponseEntity.ok(RefreshTokenResponse.builder()
+                            .accessToken(newAccessToken)
+                            .refreshToken(requestRefreshToken)
+                            .build());
+                }).orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
     }
 }
