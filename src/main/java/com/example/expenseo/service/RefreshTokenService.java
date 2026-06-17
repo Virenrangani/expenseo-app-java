@@ -1,28 +1,35 @@
 package com.example.expenseo.service;
 
 import com.example.expenseo.models.RefreshTokenModel;
+import com.example.expenseo.models.UserModel;
 import com.example.expenseo.repository.RefreshTokenRepository;
 import com.example.expenseo.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.Base64;
+import java.util.Optional;
+
 
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
-    private RefreshTokenRepository refreshTokenRepository;
-    private UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
 
+    @Value("${jwt.refresh.expiration}")
+    private Long refreshTokenDurationMs;
 
     public RefreshTokenModel generateToken(String userId){
-        long refreshTokenDurationMs = 604800000L;
+
         RefreshTokenModel refreshToken = RefreshTokenModel.builder()
                 .user(userRepository.findById(userId).orElseThrow(()->new RuntimeException("User is not found")))
-                .token(UUID.randomUUID().toString())
+                .token(generateSecureToken())
                 .expireTime(Instant.now().plusMillis(refreshTokenDurationMs))
                 .build();
 
@@ -38,7 +45,25 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public int deleteByUserId(String userId) {
-        return refreshTokenRepository.deleteByUser(userRepository.findById(userId).get());
+    public void deleteByUserId(String userId) {
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        refreshTokenRepository.deleteByUser(user);
+    }
+
+    public Optional<RefreshTokenModel> findByToken(String token) {
+        return refreshTokenRepository.findByToken(token);
+    }
+
+    private String generateSecureToken() {
+        byte[] bytes = new byte[64];
+
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(bytes);
+
+        return Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(bytes);
     }
 }
