@@ -21,7 +21,6 @@ public class UserController {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
     private final JwtUtils jwtUtils;
-    private final RefreshTokenRepository refreshTokenRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signUp(@RequestBody @Valid UserRequest user){
@@ -73,10 +72,10 @@ public class UserController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshTokenResponse> refreshToken(RefreshTokenRequest request){
+    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest request){
         String requestRefreshToken = request.getRefreshToken();
 
-        return refreshTokenRepository.findByToken(requestRefreshToken)
+        return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshTokenModel::getUser)
                 .map(user -> {
