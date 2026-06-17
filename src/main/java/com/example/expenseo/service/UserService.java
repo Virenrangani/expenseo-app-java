@@ -2,6 +2,7 @@
 
     import com.example.expenseo.dto.*;
     import com.example.expenseo.mapper.UserMapStructMapper;
+    import com.example.expenseo.models.RefreshTokenModel;
     import com.example.expenseo.models.UserModel;
     import com.example.expenseo.repository.UserRepository;
     import com.example.expenseo.security.CustomUserDetails;
@@ -28,6 +29,7 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final EmailService emailService;
+    private final RefreshTokenService refreshTokenService;
 
 
 
@@ -111,9 +113,14 @@ public class UserService {
             // 4. Generate the token
             String jwt = jwtUtils.generateToken(userDetails);
 
+            refreshTokenService.deleteByUserId(user.getId());
+
+            RefreshTokenModel refreshToken = refreshTokenService.generateToken(user.getId());
+
             // 5. Return the response
             return AuthResponse.builder()
                     .token(jwt)
+                    .refreshToken(refreshToken.getToken())
                     .id(user.getId())
                     .email(user.getEmail())
                     .name(user.getName())
@@ -144,6 +151,7 @@ public class UserService {
             CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
                     .getContext().getAuthentication().getPrincipal();
 
+            assert userDetails != null;
             UserModel user = userDetails.getUser();
 
             if (!user.isVerified()){
