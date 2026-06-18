@@ -5,11 +5,8 @@ import com.example.expenseo.enums.ExpenseType;
 import com.example.expenseo.enums.TransactionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,6 +34,7 @@ public class ExpenseModel {
     private String title;
 
     @Enumerated(value = EnumType.STRING)
+    @Column(name = "transaction_type", length = 50)
     private TransactionType transactionType;
 
     @Enumerated(value = EnumType.STRING)
