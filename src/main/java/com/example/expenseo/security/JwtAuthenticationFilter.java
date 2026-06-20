@@ -34,49 +34,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
-        // 2. Check if header is missing or doesn't start with "Bearer "
+        // Check if header is missing or doesn't start with "Bearer "
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 3. Extract the token (Remove "Bearer " which is 7 characters)
-        jwt=authHeader.substring(7);
+        jwt = authHeader.substring(7);
 
         try {
-
-            // 4. Extract email from the token
             userEmail = jwtUtils.extractUsername(jwt);
 
-            // 5. If we have an email and the user is NOT already authenticated
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication()==null){
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 // Fetch the user from the database
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-                // 6. Validate the token
-                if (jwtUtils.isTokenValid(jwt , userDetails)){
-                    // Create an authentication token (This is Spring's way of marking someone as "logged in")
+                if (jwtUtils.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
                             userDetails.getAuthorities()
                     );
-                    // Attach metadata about the request (like the user's IP address)
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    // 7. Store the authentication in the Security Context
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+
                 }
             }
-            filterChain.doFilter(request,response);
 
-        }catch (Exception e){
-            // In production, you might want to log this error.
-            // If the token is expired or malformed, it throws an exception.
-            // We catch it and do nothing, so
-            // the filter chain continues and Spring denies access.
+        } catch (Exception e) {
+            System.out.println("JWT Error: " + e.getMessage());
         }
 
+        filterChain.doFilter(request, response);
     }
 }
