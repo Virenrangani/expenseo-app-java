@@ -29,4 +29,10 @@ public class GroupController {
         List<GroupResponse> groups = groupService.getAllGroups();
         return ResponseEntity.ok(groups);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteGroup(@PathVariable String id){
+        groupService.deleteGroup(id);
+        return ResponseEntity.ok("Group Deleted Successfully");
+    }
 }
