@@ -209,4 +209,12 @@ public class UserService {
 
             userRepository.save(user);
         }
+
+
+        public AuthResponse searchUser(String email){
+            UserModel user = userRepository.findByEmail(email)
+                    .orElseThrow(()->new RuntimeException("User is not found with this email"));
+
+            return userMapper.toResponse(user);
+        }
     }
