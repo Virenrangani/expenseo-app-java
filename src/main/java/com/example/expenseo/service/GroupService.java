@@ -60,4 +60,11 @@ public class GroupService {
 
         return  groupMapper.toResponseList(groups);
     }
+
+    public void deleteGroup(String id) {
+        if (!groupRepository.existsById(id)){
+            throw new RuntimeException("Group is not exist by this id"+id);
+        }
+        groupRepository.deleteById(id);
+    }
 }
