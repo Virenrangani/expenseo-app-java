@@ -87,4 +87,11 @@ public class UserController {
                             .build());
                 }).orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
     }
+
+    @GetMapping("/search-user")
+    public ResponseEntity<AuthResponse> searchUser(@RequestParam String email){
+        AuthResponse response = userService.searchUser(email);
+
+        return ResponseEntity.ok(response);
+    }
 }
