@@ -20,6 +20,7 @@ public interface GroupExpenseMapper {
      */
     @Mapping(source = "group.id", target = "groupId")
     @Mapping(source = "paidBy.id", target = "paidByUserId")
+    @Mapping(source = "paidBy.name", target = "paidByUserName")
     GroupExpenseResponse toResponse(GroupExpenseModel expenseModel);
 
     /// Maps the Child Split Entity to the nested SplitDetailResponse DTO.
