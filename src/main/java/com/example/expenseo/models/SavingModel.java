@@ -24,6 +24,9 @@ public class SavingModel {
     @Column(nullable = false)
     private String goal;
 
+    @Column(nullable = false)
+    private String imageUrl;
+
     @Column(nullable = false , precision = 12 , scale = 2)
     private BigDecimal targetAmount;
 
