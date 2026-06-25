@@ -22,6 +22,7 @@ public class GroupExpenseResponse {
     private LocalDateTime createdAt;
     private String groupId;
     private String paidByUserId;
+    private String paidByUserName;
     private List<SplitDetailResponse> splits;
 
     @Data
