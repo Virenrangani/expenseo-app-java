@@ -36,8 +36,11 @@ public class GroupExpenseRequest {
     @NotBlank(message = "Paid by User ID is required")
     private String paidByUserId;
 
+    @NotBlank(message = "Paid by user name is required")
+    private String paidByUserName;
+
     @NotEmpty(message = "Splits cannot be empty")
-    @Valid // This tells Spring to validate the nested objects too!
+    @Valid
     private List<SplitDetailRequest> splits;
 
 
