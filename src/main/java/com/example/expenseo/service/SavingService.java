@@ -33,6 +33,7 @@ public class SavingService {
 
         SavingModel savingGoal = SavingModel.builder()
                 .goal(request.getGoal())
+                .imageUrl(request.getImageUrl())
                 .targetAmount(request.getTargetAmount())
                 .user(managedUser)
                 .build();

@@ -18,6 +18,8 @@ public class SavingResponse {
 
     private String goal;
 
+    private String imageUrl;
+
     private BigDecimal targetAmount;
 
     private BigDecimal savingAmount = BigDecimal.ZERO;

@@ -15,6 +15,9 @@ import java.math.BigDecimal;
 @Builder
 public class SavingRequest {
 
+    @NotBlank(message = "Goal image is required")
+    private String imageUrl;
+
     @NotBlank(message = "Gaol name is required")
     private String goal;
 
