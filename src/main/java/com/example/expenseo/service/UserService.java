@@ -23,14 +23,13 @@
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final UserMapStructMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtUtils jwtUtils;
-    private final EmailService emailService;
-    private final RefreshTokenService refreshTokenService;
-
+        private final UserRepository userRepository;
+        private final UserMapStructMapper userMapper;
+        private final PasswordEncoder passwordEncoder;
+        private final AuthenticationManager authenticationManager;
+        private final JwtUtils jwtUtils;
+        private final EmailService emailService;
+        private final RefreshTokenService refreshTokenService;
 
 
         @Transactional
@@ -67,21 +66,21 @@ public class UserService {
             // 8. Return the mapped response
             return userMapper.toResponse(savedUser);
 
-    }
+        }
 
-        public void verifyOtp(OtpVerificationRequest request){
+        public void verifyOtp(OtpVerificationRequest request) {
             UserModel user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(()-> new RuntimeException("User is not found"));
+                    .orElseThrow(() -> new RuntimeException("User is not found"));
 
-            if (user.isVerified()){
+            if (user.isVerified()) {
                 throw new RuntimeException("User is already verified..!");
             }
 
-            if (user.getOtp() == null || !user.getOtp().equals(request.getOtp())){
+            if (user.getOtp() == null || !user.getOtp().equals(request.getOtp())) {
                 throw new RuntimeException("Invalid OTP. Please try again.");
             }
 
-            if (user.getOtpExpiry().isBefore(LocalDateTime.now())){
+            if (user.getOtpExpiry().isBefore(LocalDateTime.now())) {
                 throw new RuntimeException("OTP has expired. Please request a new one.");
             }
 
@@ -127,11 +126,11 @@ public class UserService {
                     .build();
         }
 
-        public void resendOtp(ResendOtpRequest request){
+        public void resendOtp(ResendOtpRequest request) {
             UserModel user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(()-> new RuntimeException("User not found with this email."));
+                    .orElseThrow(() -> new RuntimeException("User not found with this email."));
 
-            if (user.isVerified()){
+            if (user.isVerified()) {
                 throw new RuntimeException("This account is already verified. Please log in.");
             }
 
@@ -147,14 +146,14 @@ public class UserService {
             emailService.sendOtpEmail(user.getEmail(), newOtp);
         }
 
-        public void updatePassword(UpdatePasswordRequest request){
+        public void updatePassword(UpdatePasswordRequest request) {
             CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
                     .getContext().getAuthentication().getPrincipal();
 
             assert userDetails != null;
             UserModel user = userDetails.getUser();
 
-            if (!user.isVerified()){
+            if (!user.isVerified()) {
                 throw new RuntimeException("User is not verified..!");
             }
 
@@ -170,9 +169,9 @@ public class UserService {
         }
 
         @Transactional
-        public void forgetPassword(ForgotPasswordRequest request){
+        public void forgetPassword(ForgotPasswordRequest request) {
             UserModel user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(()->new RuntimeException("User not found with this email."));
+                    .orElseThrow(() -> new RuntimeException("User not found with this email."));
 
             SecureRandom random = new SecureRandom();
             int otpNumber = 1000 + random.nextInt(9000);
@@ -182,11 +181,11 @@ public class UserService {
             user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
             userRepository.save(user);
 
-            emailService.sendPasswordResetEmail(request.getEmail(),resetOtp);
+            emailService.sendPasswordResetEmail(request.getEmail(), resetOtp);
 
         }
 
-        public void resetPassword(ResetPasswordRequest request){
+        public void resetPassword(ResetPasswordRequest request) {
             UserModel user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new RuntimeException("User not found."));
 
@@ -211,10 +210,43 @@ public class UserService {
         }
 
 
-        public AuthResponse searchUser(String email){
+        public AuthResponse searchUser(String email) {
             UserModel user = userRepository.findByEmail(email)
-                    .orElseThrow(()->new RuntimeException("User is not found with this email"));
+                    .orElseThrow(() -> new RuntimeException("User is not found with this email"));
 
             return userMapper.toResponse(user);
+        }
+
+        public UserProfileDto getProfile(String userId) {
+            UserModel user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+            // MapStruct automatically maps the entity to the Profile DTO
+            return userMapper.toProfileDto(user);
+        }
+
+        @Transactional
+        public UserProfileDto updateProfile(
+                String userId,
+                UserProfileUpdateRequest request) {
+
+            UserModel user = userRepository.findById(userId)
+                    .orElseThrow(() ->
+                            new RuntimeException(
+                                    "User not found with ID: " + userId
+                            )
+                    );
+
+            user.setName(request.getName());
+            user.setPhoneNumber(request.getPhoneNumber());
+            user.setGender(request.getGender());
+            user.setDob(request.getDob());
+            user.setProfileImage(request.getProfileImage());
+
+            user.setProfileComplete(true);
+
+            UserModel updatedUser = userRepository.save(user);
+
+            return userMapper.toProfileDto(updatedUser);
         }
     }

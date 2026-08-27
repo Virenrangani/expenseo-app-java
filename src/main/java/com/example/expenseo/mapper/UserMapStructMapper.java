@@ -1,5 +1,6 @@
 package com.example.expenseo.mapper;
 
+import com.example.expenseo.dto.UserProfileDto;
 import com.example.expenseo.dto.UserRequest;
 import com.example.expenseo.dto.AuthResponse;
 import com.example.expenseo.models.UserModel;
@@ -12,4 +13,6 @@ public interface UserMapStructMapper {
     UserModel toEntity(UserRequest request);
 
     AuthResponse toResponse(UserModel user);
+
+    UserProfileDto toProfileDto(UserModel user);
 }
