@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserProfileUpdateRequest {
 
-    private String name;
     private String phoneNumber;
     private String gender;
     private String dob;

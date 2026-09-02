@@ -237,7 +237,6 @@ public class UserService {
                             )
                     );
 
-            user.setName(request.getName());
             user.setPhoneNumber(request.getPhoneNumber());
             user.setGender(request.getGender());
             user.setDob(request.getDob());
