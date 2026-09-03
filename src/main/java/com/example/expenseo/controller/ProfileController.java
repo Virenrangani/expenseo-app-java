@@ -24,4 +24,10 @@ public class ProfileController {
 
         return ResponseEntity.ok(updatedProfile);
     }
+
+    @GetMapping("/{userId}")
+    public  ResponseEntity<UserProfileDto> getProfile( @PathVariable String userId){
+        UserProfileDto profile = userService.getProfile(userId);
+        return  ResponseEntity.ok(profile);
+    }
 }
