@@ -1,5 +1,7 @@
 package com.example.expenseo.dto;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Lob;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

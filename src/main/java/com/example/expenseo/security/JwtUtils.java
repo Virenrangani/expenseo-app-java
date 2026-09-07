@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -20,26 +21,20 @@ public class JwtUtils {
     private String secretKey;
 
     @Value("${application.security.jwt.expiration}")
-    private long jwtExpiration;
+    private long jwtExpiration; // 86400000 (24 hours)
 
-    /**
-     * Extracts the username (which is the email in our case) from the token.
-     */
-    public String extractUsername(String token){
+    @Value("${jwt.refresh.expiration}")
+    private long refreshExpiration; // 604800000 (7 days)
+
+    public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    /**
-     * Extracts a specific claim from the token using a resolver function.
-     */
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    /**
-     * Parses the token and returns all the claims (payload data) inside it.
-     */
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getKey())
@@ -48,49 +43,44 @@ public class JwtUtils {
                 .getPayload();
     }
 
-    /**
-     * Converts the Base64 string from application.properties into a cryptographic SecretKey.
-     */
     private SecretKey getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    /**
-     * Generates a token with just the UserDetails.
-     */
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        return buildToken(new HashMap<>(), userDetails, jwtExpiration);
     }
 
-    /**
-     * Generates a token with extra claims (like roles, user ID, etc.) and UserDetails.
-     */
-    private String generateToken(
-            HashMap<String , Object> extraClaims, UserDetails userDetails) {
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    // New: Generates refresh token with 7-day expiration
+    public String generateRefreshToken(UserDetails userDetails) {
+        return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+    }
+
+    private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
         return Jwts.builder()
                 .claims(extraClaims)
-                .subject(userDetails.getUsername()) // Usually the user's email
+                .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(getKey()) // Modern JJWT signs with a SecretKey object
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getKey())
                 .compact();
     }
 
-    /**
-     * Validates that the token belongs to the user and is not expired.
-     */
-    public boolean isTokenValid(String token , UserDetails userDetails){
-        final String username= extractUsername(token);
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
     private Date extractExpiration(String token) {
-        return extractClaim(token , Claims::getExpiration);
+        return extractClaim(token, Claims::getExpiration);
     }
-
 }

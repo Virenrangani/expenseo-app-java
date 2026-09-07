@@ -36,6 +36,8 @@ public class UserModel {
 
     private String dob;
 
+    @Lob
+    @Column(name = "profile_image", columnDefinition = "LONGTEXT")
     private String profileImage;
 
     @Column(nullable = false)
