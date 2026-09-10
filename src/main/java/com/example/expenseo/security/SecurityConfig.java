@@ -41,6 +41,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth->
                         auth.requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/notifications/**").authenticated()
                                 .anyRequest().authenticated()
                 );
         // 5. Add our custom JWT filter BEFORE the standard username/password filter
